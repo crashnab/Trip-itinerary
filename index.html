@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Japan Family Trip Map</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['"Hanken Grotesk"', "system-ui", "sans-serif"],
+            },
+            colors: {
+              primary: {
+                DEFAULT: "oklch(79.1% 0.132 196.8)",
+                soft: "oklch(92% 0.05 196.8)",
+                deep: "oklch(55% 0.11 210)",
+              },
+            },
+            boxShadow: {
+              soft: "0 10px 30px rgba(15, 45, 60, 0.12)",
+              marker: "0 8px 20px rgba(15, 45, 60, 0.22)",
+            },
+          },
+        },
+      };
+    </script>
+
+    <link
+      href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="font-sans antialiased">
+    <div id="app">
+      <div id="map" role="application" aria-label="Interactive Japan trip map"></div>
+
+      <header id="national-banner" class="glass-panel national-banner">
+        <p class="eyebrow">Family trip · Ages 11–13</p>
+        <h1>Japan Adventure Map</h1>
+        <p class="subtitle">Tap a city to explore your itinerary</p>
+      </header>
+
+      <aside id="city-panel" class="glass-panel city-panel" aria-hidden="true">
+        <div class="city-panel__handle" aria-hidden="true"></div>
+        <div class="city-panel__header">
+          <button
+            id="btn-zoom-out"
+            type="button"
+            class="btn-pill btn-ghost"
+            aria-label="Zoom out to Japan"
+          >
+            ← Zoom out to Japan
+          </button>
+          <h2 id="city-title">City</h2>
+          <p id="city-subtitle" class="subtitle">Your stops &amp; discoveries</p>
+        </div>
+
+        <div class="city-panel__scroll">
+          <section aria-labelledby="itinerary-heading">
+            <h3 id="itinerary-heading" class="section-label">Itinerary</h3>
+            <div id="itinerary-list" class="card-stack"></div>
+          </section>
+
+          <section class="discover-section" aria-labelledby="discover-heading">
+            <h3 id="discover-heading" class="section-label discover-label">
+              Discover More
+            </h3>
+            <p class="discover-hint">Kid-approved extras near this city</p>
+            <div id="discover-list" class="card-stack"></div>
+          </section>
+        </div>
+      </aside>
+    </div>
+
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
