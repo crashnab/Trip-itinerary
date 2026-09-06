@@ -2,7 +2,8 @@
   "use strict";
 
   const STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
-  const BUILDING_LAYER_ID = "trip-3d-buildings";
+  const BUILDING_3D_LAYER_ID = "building-3d";
+  const BUILDING_FALLBACK_LAYER_ID = "trip-3d-buildings";
 
   const els = {
     map: document.getElementById("map"),
@@ -38,13 +39,13 @@
   map.addControl(new maplibregl.ScaleControl({ maxWidth: 120 }), "bottom-left");
 
   map.on("load", () => {
-    ensureBuildingLayer();
+    prepareBuildingLayers();
     setBuildingsVisible(false);
     createCityMarkers();
   });
 
   map.on("style.load", () => {
-    ensureBuildingLayer();
+    prepareBuildingLayers();
     setBuildingsVisible(state.view === "city");
   });
 
@@ -238,8 +239,10 @@
       .addTo(map);
   }
 
-  function ensureBuildingLayer() {
-    if (map.getLayer(BUILDING_LAYER_ID)) return;
+  function prepareBuildingLayers() {
+    // OpenFreeMap Liberty already ships a fill-extrusion layer; prefer it.
+    if (map.getLayer(BUILDING_3D_LAYER_ID)) return;
+    if (map.getLayer(BUILDING_FALLBACK_LAYER_ID)) return;
 
     const layers = map.getStyle().layers || [];
     let labelLayerId;
@@ -250,13 +253,17 @@
       }
     }
 
-    const sourceId = findBuildingSourceId();
+    const sources = map.getStyle().sources || {};
+    const sourceId = ["openmaptiles", "carto", "composite"]
+      .find((id) => sources[id]) ||
+      Object.keys(sources).find((id) => sources[id].type === "vector");
+
     if (!sourceId) return;
 
     try {
       map.addLayer(
         {
-          id: BUILDING_LAYER_ID,
+          id: BUILDING_FALLBACK_LAYER_ID,
           source: sourceId,
           "source-layer": "building",
           type: "fill-extrusion",
@@ -264,13 +271,10 @@
           paint: {
             "fill-extrusion-color": "#d7e6ec",
             "fill-extrusion-height": [
-              "interpolate",
-              ["linear"],
-              ["zoom"],
-              14,
-              0,
-              14.5,
-              ["coalesce", ["get", "render_height"], ["get", "height"], 8],
+              "coalesce",
+              ["get", "render_height"],
+              ["get", "height"],
+              8,
             ],
             "fill-extrusion-base": [
               "coalesce",
@@ -278,7 +282,7 @@
               ["get", "min_height"],
               0,
             ],
-            "fill-extrusion-opacity": 0.65,
+            "fill-extrusion-opacity": 0.7,
           },
         },
         labelLayerId
@@ -288,22 +292,15 @@
     }
   }
 
-  function findBuildingSourceId() {
-    const sources = map.getStyle().sources || {};
-    const preferred = ["openmaptiles", "carto", "composite"];
-    for (const id of preferred) {
-      if (sources[id]) return id;
-    }
-    const vectorIds = Object.keys(sources).filter((id) => sources[id].type === "vector");
-    return vectorIds[0] || null;
-  }
-
   function setBuildingsVisible(visible) {
-    if (!map.getLayer(BUILDING_LAYER_ID)) {
-      ensureBuildingLayer();
-    }
-    if (!map.getLayer(BUILDING_LAYER_ID)) return;
-    map.setLayoutProperty(BUILDING_LAYER_ID, "visibility", visible ? "visible" : "none");
+    prepareBuildingLayers();
+    const layerId = map.getLayer(BUILDING_3D_LAYER_ID)
+      ? BUILDING_3D_LAYER_ID
+      : map.getLayer(BUILDING_FALLBACK_LAYER_ID)
+        ? BUILDING_FALLBACK_LAYER_ID
+        : null;
+    if (!layerId) return;
+    map.setLayoutProperty(layerId, "visibility", visible ? "visible" : "none");
   }
 
   function escapeHtml(value) {
